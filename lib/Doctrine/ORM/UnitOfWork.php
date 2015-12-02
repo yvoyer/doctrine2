@@ -1772,65 +1772,6 @@ class UnitOfWork implements PropertyChangedListener
     }
 
     /**
-     * Detaches an entity from the persistence management. It's persistence will
-     * no longer be managed by Doctrine.
-     *
-     * @param object $entity The entity to detach.
-     *
-     * @return void
-     */
-    public function detach($entity)
-    {
-        $visited = array();
-
-        $this->doDetach($entity, $visited);
-    }
-
-    /**
-     * Executes a detach operation on the given entity.
-     *
-     * @param object  $entity
-     * @param array   $visited
-     * @param boolean $noCascade if true, don't cascade detach operation.
-     *
-     * @return void
-     */
-    private function doDetach($entity, array &$visited, $noCascade = false)
-    {
-        $oid = spl_object_hash($entity);
-
-        if (isset($visited[$oid])) {
-            return; // Prevent infinite recursion
-        }
-
-        $visited[$oid] = $entity; // mark visited
-
-        switch ($this->getEntityState($entity, self::STATE_DETACHED)) {
-            case self::STATE_MANAGED:
-                if ($this->isInIdentityMap($entity)) {
-                    $this->removeFromIdentityMap($entity);
-                }
-
-                unset(
-                    $this->entityInsertions[$oid],
-                    $this->entityUpdates[$oid],
-                    $this->entityDeletions[$oid],
-                    $this->entityIdentifiers[$oid],
-                    $this->entityStates[$oid],
-                    $this->originalEntityData[$oid]
-                );
-                break;
-            case self::STATE_NEW:
-            case self::STATE_DETACHED:
-                return;
-        }
-
-        if ( ! $noCascade) {
-            $this->cascadeDetach($entity, $visited);
-        }
-    }
-
-    /**
      * Refreshes the state of the given entity from the database, overwriting
      * any local, unpersisted changes.
      *
@@ -1916,49 +1857,6 @@ class UnitOfWork implements PropertyChangedListener
 
                 case ($relatedEntities !== null):
                     $this->doRefresh($relatedEntities, $visited);
-                    break;
-
-                default:
-                    // Do nothing
-            }
-        }
-    }
-
-    /**
-     * Cascades a detach operation to associated entities.
-     *
-     * @param object $entity
-     * @param array  $visited
-     *
-     * @return void
-     */
-    private function cascadeDetach($entity, array &$visited)
-    {
-        $class = $this->em->getClassMetadata(get_class($entity));
-
-        $associationMappings = array_filter(
-            $class->associationMappings,
-            function ($assoc) { return $assoc['isCascadeDetach']; }
-        );
-
-        foreach ($associationMappings as $assoc) {
-            $relatedEntities = $class->reflFields[$assoc['fieldName']]->getValue($entity);
-
-            switch (true) {
-                case ($relatedEntities instanceof PersistentCollection):
-                    // Unwrap so that foreach() does not initialize
-                    $relatedEntities = $relatedEntities->unwrap();
-                    // break; is commented intentionally!
-
-                case ($relatedEntities instanceof Collection):
-                case (is_array($relatedEntities)):
-                    foreach ($relatedEntities as $relatedEntity) {
-                        $this->doDetach($relatedEntity, $visited);
-                    }
-                    break;
-
-                case ($relatedEntities !== null):
-                    $this->doDetach($relatedEntities, $visited);
                     break;
 
                 default:
@@ -2166,38 +2064,33 @@ class UnitOfWork implements PropertyChangedListener
      */
     public function clear($entityName = null)
     {
-        if ($entityName === null) {
-            $this->identityMap =
-            $this->entityIdentifiers =
-            $this->originalEntityData =
-            $this->entityChangeSets =
-            $this->entityStates =
-            $this->scheduledForSynchronization =
-            $this->entityInsertions =
-            $this->entityUpdates =
-            $this->entityDeletions =
-            $this->collectionDeletions =
-            $this->collectionUpdates =
-            $this->extraUpdates =
-            $this->readOnlyObjects =
-            $this->visitedCollections =
-            $this->orphanRemovals = array();
+        if (null !== $entityName) {
+            throw new \BadMethodCallException(sprintf(
+                'The %s($entityName) functionality (called with "%s") has been disabled, '
+                . 'as it is being completely re-designed',
+                __METHOD__,
+                $entityName
+            ));
+        }
 
-            if ($this->commitOrderCalculator !== null) {
-                $this->commitOrderCalculator->clear();
-            }
-        } else {
-            $visited = array();
+        $this->identityMap =
+        $this->entityIdentifiers =
+        $this->originalEntityData =
+        $this->entityChangeSets =
+        $this->entityStates =
+        $this->scheduledForSynchronization =
+        $this->entityInsertions =
+        $this->entityUpdates =
+        $this->entityDeletions =
+        $this->collectionDeletions =
+        $this->collectionUpdates =
+        $this->extraUpdates =
+        $this->readOnlyObjects =
+        $this->visitedCollections =
+        $this->orphanRemovals = [];
 
-            foreach ($this->identityMap as $className => $entities) {
-                if ($className !== $entityName) {
-                    continue;
-                }
-
-                foreach ($entities as $entity) {
-                    $this->doDetach($entity, $visited, false);
-                }
-            }
+        if ($this->commitOrderCalculator !== null) {
+            $this->commitOrderCalculator->clear();
         }
 
         if ($this->evm->hasListeners(Events::onClear)) {
