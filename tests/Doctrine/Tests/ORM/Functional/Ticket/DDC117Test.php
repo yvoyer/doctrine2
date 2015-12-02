@@ -425,22 +425,6 @@ class DDC117Test extends \Doctrine\Tests\OrmFunctionalTestCase
     }
 
     /**
-     * @group DDC-1519
-     */
-    public function testMergeForeignKeyIdentifierEntity()
-    {
-        $idCriteria = array('source' => $this->article1->id(), 'target' => $this->article2->id());
-
-        $refRep = $this->_em->find("Doctrine\Tests\Models\DDC117\DDC117Reference", $idCriteria);
-
-        $this->_em->detach($refRep);
-        $refRep = $this->_em->merge($refRep);
-
-        $this->assertEquals($this->article1->id(), $refRep->source()->id());
-        $this->assertEquals($this->article2->id(), $refRep->target()->id());
-    }
-
-    /**
      * @group DDC-1652
      */
     public function testArrayHydrationWithCompositeKey()
