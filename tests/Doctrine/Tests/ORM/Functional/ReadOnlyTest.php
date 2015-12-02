@@ -58,6 +58,8 @@ class ReadOnlyTest extends \Doctrine\Tests\OrmFunctionalTestCase
      */
     public function testClearEntitiesReadOnly()
     {
+        // @TODO the semantics around `EntityManager#clear()` need to be improved
+        $this->markTestIncomplete('Feature has been disabled, and will be re-enabled later on');
         $readOnly = new ReadOnlyEntity("Test1", 1234);
         $this->_em->persist($readOnly);
         $this->_em->flush();

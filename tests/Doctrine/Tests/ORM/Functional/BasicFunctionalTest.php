@@ -874,6 +874,8 @@ class BasicFunctionalTest extends \Doctrine\Tests\OrmFunctionalTestCase
      */
     public function testClearWithEntityName()
     {
+        // @TODO the semantics around `EntityManager#clear()` need to be improved
+        $this->markTestIncomplete('Feature has been disabled, and will be re-enabled later on');
         $user = new CmsUser;
         $user->name = 'Dominik';
         $user->username = 'domnikl';
