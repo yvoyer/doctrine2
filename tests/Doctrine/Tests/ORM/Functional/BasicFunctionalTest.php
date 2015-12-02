@@ -482,48 +482,6 @@ class BasicFunctionalTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->assertEquals(4, $gblanco2->getPhonenumbers()->count());
     }
 
-    public function testSetSetAssociationWithGetReference()
-    {
-        $user = new CmsUser;
-        $user->name = 'Guilherme';
-        $user->username = 'gblanco';
-        $user->status = 'developer';
-        $this->_em->persist($user);
-
-        $address = new CmsAddress;
-        $address->country = 'Germany';
-        $address->city = 'Berlin';
-        $address->zip = '12345';
-        $this->_em->persist($address);
-
-        $this->_em->flush();
-        $this->_em->detach($address);
-
-        $this->assertFalse($this->_em->contains($address));
-        $this->assertTrue($this->_em->contains($user));
-
-        // Assume we only got the identifier of the address and now want to attach
-        // that address to the user without actually loading it, using getReference().
-        $addressRef = $this->_em->getReference('Doctrine\Tests\Models\CMS\CmsAddress', $address->getId());
-
-        //$addressRef->getId();
-        //\Doctrine\Common\Util\Debug::dump($addressRef);
-
-        $user->setAddress($addressRef); // Ugh! Initializes address 'cause of $address->setUser($user)!
-
-        $this->_em->flush();
-        $this->_em->clear();
-
-        // Check with a fresh load that the association is indeed there
-        $query = $this->_em->createQuery("select u, a from Doctrine\Tests\Models\CMS\CmsUser u join u.address a where u.username='gblanco'");
-        $gblanco = $query->getSingleResult();
-
-        $this->assertInstanceOf('Doctrine\Tests\Models\CMS\CmsUser', $gblanco);
-        $this->assertInstanceOf('Doctrine\Tests\Models\CMS\CmsAddress', $gblanco->getAddress());
-        $this->assertEquals('Berlin', $gblanco->getAddress()->getCity());
-
-    }
-
     public function testOneToManyCascadeRemove()
     {
         $user = new CmsUser;

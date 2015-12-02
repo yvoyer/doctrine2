@@ -130,7 +130,6 @@ class EntityManagerTest extends \Doctrine\Tests\OrmTestCase
             array('persist'),
             array('remove'),
             array('refresh'),
-            array('detach')
         );
     }
 
