@@ -64,6 +64,7 @@ class SqlExpressionVisitor extends ExpressionVisitor
      */
     public function walkComparison(Comparison $comparison)
     {
+        var_dump($comparison);
         $field = $comparison->getField();
         $value = $comparison->getValue()->getValue(); // shortcut for walkValue()
 

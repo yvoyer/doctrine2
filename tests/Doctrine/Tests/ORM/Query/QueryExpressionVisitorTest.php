@@ -76,6 +76,9 @@ class QueryExpressionVisitorTest extends \PHPUnit_Framework_TestCase
             // Test alternative rootAlias
             array($cb->eq('p.field', 'value'), $qb->eq('p.field', ':p_field'), new Parameter('p_field', 'value')),
             array($cb->eq('p.object.field', 'value'), $qb->eq('p.object.field', ':p_object_field'), new Parameter('p_object_field', 'value')),
+
+            // Test closure matching in expression, will delay matching when data is loaded
+            array($cb->matchingClosure(function () { return true; }), ''),
         );
     }
 

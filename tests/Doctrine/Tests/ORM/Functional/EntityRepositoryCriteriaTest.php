@@ -182,4 +182,39 @@ class EntityRepositoryCriteriaTest extends OrmFunctionalTestCase
 
         $this->assertFalse($tweets->isInitialized());
     }
+
+    public function testMatchingUsingClosureComparison()
+    {
+        $this->loadFixture();
+        $repository = $this->_em->getRepository('Doctrine\Tests\Models\Generic\DateTimeModel');
+
+        $dates = $repository->matching(new Criteria());
+
+        $this->assertFalse($dates->isInitialized());
+        $this->assertCount(3, $dates);
+        $this->assertFalse($dates->isInitialized());
+
+        // Test it can work even with a constraint
+        $criteria = Criteria::create()
+            ->andWhere(
+                Criteria::expr()->matchingClosure(
+                    function (DateTimeModel $date) {
+                        return $date->datetime === '';
+                    }
+                )
+            )
+        ;
+
+        $dates = $repository->matching($criteria);
+
+        $this->assertFalse($dates->isInitialized());
+        $this->assertCount(2, $dates);
+        $this->assertFalse($dates->isInitialized());
+
+        // Trigger a loading, to make sure collection is initialized
+        $date = $dates[0];
+        $this->assertTrue($dates->isInitialized());
+
+        var_dump($repository->matching($criteria)->toArray());
+    }
 }
